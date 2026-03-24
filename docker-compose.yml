@@ -1,0 +1,12 @@
+services:
+  bot:
+    build: .
+    env_file:
+      - .env
+
+  test:
+    build: .
+    command: python -m pytest tests/ -v
+    volumes:
+      - ./tests:/app/tests
+      - ./src:/app/src

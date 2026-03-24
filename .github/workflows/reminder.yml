@@ -1,0 +1,37 @@
+name: Schedule Reminder
+
+# TODO: 部長の承認後、以下のコメントアウトを解除してスケジュール実行を有効化する
+# on:
+#   schedule:
+#     # 金曜日 18:00 JST (09:00 UTC)
+#     - cron: '0 9 * * 5'
+#     # 月曜日 09:00 JST (00:00 UTC)
+#     - cron: '0 0 * * 1'
+#   workflow_dispatch:
+
+# 承認待ち: 手動実行のみ有効
+on:
+  workflow_dispatch:
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run reminder bot
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          SCHEDULE_CHANNEL_ID: ${{ secrets.SCHEDULE_CHANNEL_ID }}
+          REMINDER_CHANNEL_ID: ${{ secrets.REMINDER_CHANNEL_ID }}
+        run: python main.py

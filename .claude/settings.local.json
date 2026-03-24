@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx cc-sdd@latest:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(docker compose build:*)",
+      "Bash(docker build:*)",
+      "Bash(docker compose run:*)",
+      "Bash(python main.py:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)"
+    ]
+  }
+}
