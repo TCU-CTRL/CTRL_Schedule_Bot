@@ -12,6 +12,12 @@ name: Schedule Reminder
 # 承認待ち: 手動実行のみ有効
 on:
   workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'テストモード（@everyoneなしで送信）'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   send-reminder:
@@ -34,4 +40,9 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           SCHEDULE_CHANNEL_ID: ${{ secrets.SCHEDULE_CHANNEL_ID }}
           REMINDER_CHANNEL_ID: ${{ secrets.REMINDER_CHANNEL_ID }}
-        run: python main.py
+        run: |
+          if [ "${{ inputs.test_mode }}" = "true" ]; then
+            python main.py --test force-no-mention
+          else
+            python main.py
+          fi

@@ -125,9 +125,10 @@ def post_test_schedule(config: Config) -> None:
         logger.error("Failed to post test schedule.")
 
 
-def force_send(config: Config) -> None:
+def force_send(config: Config, mention_everyone: bool = True) -> None:
     """Force send reminder by scanning all messages in the schedule channel."""
-    logger.info("=== Force Send Reminder (Scanning Channel) ===")
+    mode = "with @everyone" if mention_everyone else "without @everyone"
+    logger.info("=== Force Send Reminder (Scanning Channel) %s ===", mode)
     client = DiscordClient(config.discord_token)
 
     today = date.today()
@@ -163,9 +164,11 @@ def force_send(config: Config) -> None:
         nearest = max(schedules, key=lambda s: s.activity_date)
         logger.info("No upcoming schedules. Using most recent: %s - %s", nearest.activity_date, nearest.description)
 
-    # Send reminder with @everyone
-    reminder = formatter.format_reminder(nearest.activity_date, nearest.description, mention_everyone=True)
-    logger.info("=== Sending reminder with @everyone ===")
+    # Send reminder
+    reminder = formatter.format_reminder(
+        nearest.activity_date, nearest.description, mention_everyone=mention_everyone
+    )
+    logger.info("=== Sending reminder %s ===", mode)
     success = client.post_message(config.reminder_channel_id, reminder)
     if success:
         logger.info("Reminder sent successfully!")
@@ -178,8 +181,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Discord Schedule Reminder Bot")
     parser.add_argument(
         "--test",
-        choices=["connection", "send", "dry-run", "force", "post-schedule"],
-        help="Test mode: connection (fetch messages), send (test message), dry-run (simulate), force (send nearest schedule with @everyone), post-schedule (post test schedule)"
+        choices=["connection", "send", "dry-run", "force", "force-no-mention", "post-schedule"],
+        help="Test mode: connection (fetch messages), send (test message), dry-run (simulate), force (send nearest schedule with @everyone), force-no-mention (send without @everyone), post-schedule (post test schedule)"
     )
     args = parser.parse_args()
 
@@ -198,7 +201,9 @@ def main() -> None:
         elif args.test == "dry-run":
             test_dry_run(config)
         elif args.test == "force":
-            force_send(config)
+            force_send(config, mention_everyone=True)
+        elif args.test == "force-no-mention":
+            force_send(config, mention_everyone=False)
         elif args.test == "post-schedule":
             post_test_schedule(config)
         else:
