@@ -143,9 +143,6 @@ def force_send(config: Config, mention_everyone: bool = True) -> None:
     # Parse all schedules from all messages
     schedules = []
     for msg in messages:
-        # Log raw message content for debugging
-        content_preview = msg.content[:100] if len(msg.content) > 100 else msg.content
-        logger.info("Message content: %s", repr(content_preview))
         # Try parsing each line of the message
         for line in msg.content.split("\n"):
             entry = parser.parse_schedule(line.strip(), today.year, today.month)
@@ -192,9 +189,6 @@ def main() -> None:
     try:
         config = Config.load()
         logger.info("Config loaded successfully.")
-        # Debug: show last 4 digits of channel IDs for verification
-        logger.info("Schedule channel (last 4): ...%s", config.schedule_channel_id[-4:])
-        logger.info("Reminder channel (last 4): ...%s", config.reminder_channel_id[-4:])
     except ConfigError as e:
         logger.error("Configuration error: %s", e)
         raise SystemExit(1)
