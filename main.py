@@ -143,6 +143,9 @@ def force_send(config: Config, mention_everyone: bool = True) -> None:
     # Parse all schedules from all messages
     schedules = []
     for msg in messages:
+        # Log raw message content for debugging
+        content_preview = msg.content[:100] if len(msg.content) > 100 else msg.content
+        logger.info("Message content: %s", repr(content_preview))
         # Try parsing each line of the message
         for line in msg.content.split("\n"):
             entry = parser.parse_schedule(line.strip(), today.year, today.month)
