@@ -35,6 +35,7 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           SCHEDULE_CHANNEL_ID: ${{ secrets.SCHEDULE_CHANNEL_ID }}
           REMINDER_CHANNEL_ID: ${{ secrets.REMINDER_CHANNEL_ID }}
+          TZ: Asia/Tokyo
         run: |
           if [ "${{ inputs.test_mode }}" = "true" ]; then
             python main.py --test force-no-mention
