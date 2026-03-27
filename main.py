@@ -189,6 +189,9 @@ def main() -> None:
     try:
         config = Config.load()
         logger.info("Config loaded successfully.")
+        # Debug: show last 4 digits of channel IDs for verification
+        logger.info("Schedule channel (last 4): ...%s", config.schedule_channel_id[-4:])
+        logger.info("Reminder channel (last 4): ...%s", config.reminder_channel_id[-4:])
     except ConfigError as e:
         logger.error("Configuration error: %s", e)
         raise SystemExit(1)
