@@ -8,11 +8,11 @@ on:
     - cron: '0 0 * * 1'
   workflow_dispatch:
     inputs:
-      test_mode:
-        description: 'テストモード（@everyoneなしで送信）'
+      mention:
+        description: '@everyoneメンション付きで送信'
         required: false
         type: boolean
-        default: false
+        default: true
 
 jobs:
   send-reminder:
@@ -37,8 +37,12 @@ jobs:
           REMINDER_CHANNEL_ID: ${{ secrets.REMINDER_CHANNEL_ID }}
           TZ: Asia/Tokyo
         run: |
-          if [ "${{ inputs.test_mode }}" = "true" ]; then
-            python main.py --test force-no-mention
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.mention }}" = "true" ]; then
+              python main.py --test force
+            else
+              python main.py --test force-no-mention
+            fi
           else
             python main.py
           fi
