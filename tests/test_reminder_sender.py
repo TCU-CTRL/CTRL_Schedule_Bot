@@ -95,6 +95,31 @@ class TestReminderSender:
         assert result is False
         mock_client.post_message.assert_not_called()
 
+    def test_run_multiline_message(self) -> None:
+        """Send reminder when matching schedule is in a multi-line message."""
+        multiline = "5月6日：オンライン\n5月13日：自己紹介\n5月20日：進捗発表会\n5月27日：未定"
+        mock_client = Mock()
+        mock_client.get_messages.return_value = [
+            DiscordMessage(id="1", content=multiline, timestamp="2026-05-18T10:00:00Z"),
+        ]
+        mock_client.post_message.return_value = True
+
+        sender = ReminderSender(
+            discord_client=mock_client,
+            schedule_channel_id="123",
+            reminder_channel_id="456",
+        )
+
+        with patch("src.reminder_sender.date") as mock_date:
+            mock_date.today.return_value = date(2026, 5, 18)  # Monday
+            mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+            result = sender.run()
+
+        assert result is True
+        mock_client.post_message.assert_called_once()
+        call_args = mock_client.post_message.call_args
+        assert "進捗発表会" in call_args[0][1]
+
     def test_run_no_valid_messages(self) -> None:
         """No reminder sent when messages don't match schedule format."""
         mock_client = Mock()

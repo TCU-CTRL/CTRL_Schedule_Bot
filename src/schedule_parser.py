@@ -10,6 +10,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 SCHEDULE_PATTERN = re.compile(r"(\d{1,2})/(\d{1,2})\s+(.+)")
+JAPANESE_DATE_PATTERN = re.compile(r"(\d{1,2})月(\d{1,2})日[：:](.+)")
 
 
 @dataclass
@@ -41,7 +42,8 @@ class ScheduleParser:
         Returns:
             ScheduleEntry if parsing succeeds, None otherwise.
         """
-        match = SCHEDULE_PATTERN.match(message_content.strip())
+        text = message_content.strip()
+        match = SCHEDULE_PATTERN.match(text) or JAPANESE_DATE_PATTERN.match(text)
 
         if not match:
             logger.debug("Message does not match schedule pattern: %s", message_content)

@@ -61,31 +61,34 @@ class ReminderSender:
         current_month = today.month
 
         for message in messages:
-            entry = self._schedule_parser.parse_schedule(
-                message.content,
-                current_year,
-                current_month,
-            )
-
-            if entry and entry.activity_date == target_date:
-                logger.info("Found matching schedule: %s", entry.description)
-
-                reminder_message = self._message_formatter.format_reminder(
-                    entry.activity_date,
-                    entry.description,
+            for line in message.content.split("\n"):
+                entry = self._schedule_parser.parse_schedule(
+                    line.strip(),
+                    current_year,
+                    current_month,
                 )
 
-                success = self._client.post_message(
-                    self._reminder_channel_id,
-                    reminder_message,
-                )
+                if entry and entry.activity_date == target_date:
+                    logger.info("Found matching schedule: %s", entry.description)
 
-                if success:
-                    logger.info("Reminder sent successfully.")
-                    return True
-                else:
-                    logger.error("Failed to send reminder.")
-                    return False
+                    reminder_message = (
+                        self._message_formatter.format_reminder(
+                            entry.activity_date,
+                            entry.description,
+                        )
+                    )
+
+                    success = self._client.post_message(
+                        self._reminder_channel_id,
+                        reminder_message,
+                    )
+
+                    if success:
+                        logger.info("Reminder sent successfully.")
+                        return True
+                    else:
+                        logger.error("Failed to send reminder.")
+                        return False
 
         logger.info("No matching schedule found for %s", target_date)
         return False

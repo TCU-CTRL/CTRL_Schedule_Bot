@@ -80,3 +80,40 @@ class TestScheduleParser:
 
         assert result is not None
         assert result.activity_date == date(2026, 3, 20)
+
+    def test_parse_japanese_date_fullwidth_colon(self) -> None:
+        """Parse M月D日：description format with fullwidth colon."""
+        result = self.parser.parse_schedule("5月6日：オンライン上でできること（相談会やゲームなど）", 2026)
+
+        assert result is not None
+        assert result.activity_date == date(2026, 5, 6)
+        assert result.description == "オンライン上でできること（相談会やゲームなど）"
+
+    def test_parse_japanese_date_halfwidth_colon(self) -> None:
+        """Parse M月D日:description format with halfwidth colon."""
+        result = self.parser.parse_schedule("5月13日:新入生＋部員の自己紹介", 2026)
+
+        assert result is not None
+        assert result.activity_date == date(2026, 5, 13)
+        assert result.description == "新入生＋部員の自己紹介"
+
+    def test_parse_japanese_date_double_digit(self) -> None:
+        """Parse double digit month and day in Japanese format."""
+        result = self.parser.parse_schedule("12月25日：クリスマス会", 2026)
+
+        assert result is not None
+        assert result.activity_date == date(2026, 12, 25)
+        assert result.description == "クリスマス会"
+
+    def test_parse_japanese_date_year_boundary(self) -> None:
+        """Handle year boundary with Japanese date format."""
+        result = self.parser.parse_schedule("1月5日：新年会", 2026, current_month=12)
+
+        assert result is not None
+        assert result.activity_date == date(2027, 1, 5)
+
+    def test_parse_japanese_date_without_colon_ignored(self) -> None:
+        """Ignore M月D日 format without colon separator (not a schedule)."""
+        result = self.parser.parse_schedule("5月6日にできること募集", 2026)
+
+        assert result is None
