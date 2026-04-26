@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 SCHEDULE_PATTERN = re.compile(r"(\d{1,2})/(\d{1,2})\s+(.+)")
 JAPANESE_DATE_PATTERN = re.compile(r"(\d{1,2})月(\d{1,2})日[：:](.+)")
+BULLET_DAY_PATTERN = re.compile(r"[・･](\d{1,2})日\s*$")
 
 
 @dataclass
@@ -74,3 +75,74 @@ class ScheduleParser:
             description=description.strip(),
             original_text=message_content.strip(),
         )
+
+    def parse_message(
+        self,
+        message_content: str,
+        reference_year: int,
+        current_month: int,
+    ) -> list[ScheduleEntry]:
+        """
+        Parse a full message and return all schedule entries.
+
+        Supports single-line formats (M/D, M月D日：) and
+        multi-line bullet format (・DD日 with description
+        on the next line, using current_month as the month).
+
+        Args:
+            message_content: The full message text.
+            reference_year: The base year for date interpretation.
+            current_month: Current month for day-only entries
+                           and year boundary handling.
+
+        Returns:
+            List of parsed ScheduleEntry objects.
+        """
+        entries: list[ScheduleEntry] = []
+        lines = message_content.split("\n")
+        i = 0
+
+        while i < len(lines):
+            line = lines[i].strip()
+
+            # Try single-line formats first
+            entry = self.parse_schedule(
+                line, reference_year, current_month,
+            )
+            if entry:
+                entries.append(entry)
+                i += 1
+                continue
+
+            # Try ・DD日 bullet format
+            bullet_match = BULLET_DAY_PATTERN.match(line)
+            if bullet_match:
+                day = int(bullet_match.group(1))
+                # Find next non-empty line as description
+                i += 1
+                while i < len(lines) and not lines[i].strip():
+                    i += 1
+                if i < len(lines):
+                    desc = lines[i].strip()
+                    try:
+                        activity_date = date(
+                            reference_year,
+                            current_month,
+                            day,
+                        )
+                        entries.append(ScheduleEntry(
+                            activity_date=activity_date,
+                            description=desc,
+                            original_text=line,
+                        ))
+                    except ValueError:
+                        logger.warning(
+                            "Invalid day %d for month %d",
+                            day, current_month,
+                        )
+                i += 1
+                continue
+
+            i += 1
+
+        return entries

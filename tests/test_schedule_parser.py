@@ -117,3 +117,100 @@ class TestScheduleParser:
         result = self.parser.parse_schedule("5月6日にできること募集", 2026)
 
         assert result is None
+
+
+class TestParseMessage:
+    """Test cases for parse_message (full message parsing)."""
+
+    def setup_method(self) -> None:
+        self.parser = ScheduleParser()
+
+    def test_bullet_day_format(self) -> None:
+        """Parse ・DD日 format with description on next line."""
+        message = "・15日\n活動紹介、先輩たちの自己紹介"
+        results = self.parser.parse_message(message, 2026, 5)
+
+        assert len(results) == 1
+        assert results[0].activity_date == date(2026, 5, 15)
+        assert results[0].description == "活動紹介、先輩たちの自己紹介"
+
+    def test_bullet_day_multiple_entries(self) -> None:
+        """Parse multiple ・DD日 entries from one message."""
+        message = (
+            "・15日\n"
+            "活動紹介、先輩たちの自己紹介\n"
+            "\n"
+            "・22日\n"
+            "C言語講習会、visual studio環境構築\n"
+            "\n"
+            "・29日\n"
+            "Siv3D、Unityでゲーム制作"
+        )
+        results = self.parser.parse_message(message, 2026, 5)
+
+        assert len(results) == 3
+        assert results[0].activity_date == date(2026, 5, 15)
+        assert results[0].description == "活動紹介、先輩たちの自己紹介"
+        assert results[1].activity_date == date(2026, 5, 22)
+        assert results[1].description == "C言語講習会、visual studio環境構築"
+        assert results[2].activity_date == date(2026, 5, 29)
+        assert results[2].description == "Siv3D、Unityでゲーム制作"
+
+    def test_bullet_day_with_extra_detail_lines(self) -> None:
+        """Only first line after ・DD日 is the description."""
+        message = (
+            "・15日\n"
+            "活動紹介\n"
+            "自己紹介する人の集計（9日まで）\n"
+            "\n"
+            "・22日\n"
+            "C言語講習会\n"
+            "グループ分け"
+        )
+        results = self.parser.parse_message(message, 2026, 5)
+
+        assert len(results) == 2
+        assert results[0].description == "活動紹介"
+        assert results[1].description == "C言語講習会"
+
+    def test_mixed_formats_in_message(self) -> None:
+        """Parse message with slash format lines."""
+        message = "5/15 活動紹介\n5/22 講習会"
+        results = self.parser.parse_message(message, 2026, 5)
+
+        assert len(results) == 2
+        assert results[0].activity_date == date(2026, 5, 15)
+        assert results[1].activity_date == date(2026, 5, 22)
+
+    def test_japanese_colon_format_in_message(self) -> None:
+        """Parse message with M月D日：format lines."""
+        message = "5月15日：活動紹介\n5月22日：講習会"
+        results = self.parser.parse_message(message, 2026, 5)
+
+        assert len(results) == 2
+        assert results[0].activity_date == date(2026, 5, 15)
+        assert results[1].activity_date == date(2026, 5, 22)
+
+    def test_empty_message(self) -> None:
+        """Return empty list for empty message."""
+        results = self.parser.parse_message("", 2026, 5)
+        assert results == []
+
+    def test_no_schedule_in_message(self) -> None:
+        """Return empty list when no schedule found."""
+        results = self.parser.parse_message("今日は天気がいい", 2026, 5)
+        assert results == []
+
+    def test_bullet_day_without_description(self) -> None:
+        """Skip ・DD日 if no description line follows."""
+        message = "・15日"
+        results = self.parser.parse_message(message, 2026, 5)
+        assert results == []
+
+    def test_bullet_halfwidth_dot(self) -> None:
+        """Parse ･DD日 format with halfwidth dot."""
+        message = "･15日\n活動紹介"
+        results = self.parser.parse_message(message, 2026, 5)
+
+        assert len(results) == 1
+        assert results[0].activity_date == date(2026, 5, 15)

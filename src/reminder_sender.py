@@ -61,15 +61,18 @@ class ReminderSender:
         current_month = today.month
 
         for message in messages:
-            for line in message.content.split("\n"):
-                entry = self._schedule_parser.parse_schedule(
-                    line.strip(),
-                    current_year,
-                    current_month,
-                )
+            entries = self._schedule_parser.parse_message(
+                message.content,
+                current_year,
+                current_month,
+            )
 
-                if entry and entry.activity_date == target_date:
-                    logger.info("Found matching schedule: %s", entry.description)
+            for entry in entries:
+                if entry.activity_date == target_date:
+                    logger.info(
+                        "Found matching schedule: %s",
+                        entry.description,
+                    )
 
                     reminder_message = (
                         self._message_formatter.format_reminder(

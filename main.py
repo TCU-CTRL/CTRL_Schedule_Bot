@@ -143,12 +143,15 @@ def force_send(config: Config, mention_everyone: bool = True) -> None:
     # Parse all schedules from all messages
     schedules = []
     for msg in messages:
-        # Try parsing each line of the message
-        for line in msg.content.split("\n"):
-            entry = parser.parse_schedule(line.strip(), today.year, today.month)
-            if entry:
-                logger.info("Found schedule: %s - %s", entry.activity_date, entry.description)
-                schedules.append(entry)
+        entries = parser.parse_message(
+            msg.content, today.year, today.month,
+        )
+        for entry in entries:
+            logger.info(
+                "Found schedule: %s - %s",
+                entry.activity_date, entry.description,
+            )
+            schedules.append(entry)
 
     if not schedules:
         logger.warning("No valid schedule found in message.")

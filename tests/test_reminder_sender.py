@@ -120,6 +120,33 @@ class TestReminderSender:
         call_args = mock_client.post_message.call_args
         assert "進捗発表会" in call_args[0][1]
 
+    def test_run_bullet_day_format(self) -> None:
+        """Send reminder when schedule uses ・DD日 format."""
+        message = "・20日\n活動紹介\n\n・27日\n講習会"
+        mock_client = Mock()
+        mock_client.get_messages.return_value = [
+            DiscordMessage(
+                id="1", content=message,
+                timestamp="2026-05-18T10:00:00Z",
+            ),
+        ]
+        mock_client.post_message.return_value = True
+
+        sender = ReminderSender(
+            discord_client=mock_client,
+            schedule_channel_id="123",
+            reminder_channel_id="456",
+        )
+
+        with patch("src.reminder_sender.date") as mock_date:
+            mock_date.today.return_value = date(2026, 5, 18)  # Monday
+            mock_date.side_effect = lambda *a, **kw: date(*a, **kw)
+            result = sender.run()
+
+        assert result is True
+        call_args = mock_client.post_message.call_args
+        assert "活動紹介" in call_args[0][1]
+
     def test_run_no_valid_messages(self) -> None:
         """No reminder sent when messages don't match schedule format."""
         mock_client = Mock()
