@@ -142,10 +142,16 @@ def force_send(config: Config, mention_everyone: bool = True) -> None:
 
     # Parse all schedules from all messages
     schedules = []
+    seen_day_only = False
     for msg in messages:
+        has_day_only = parser.has_day_only_entries(msg.content)
+        skip_day_only = has_day_only and seen_day_only
         entries = parser.parse_message(
             msg.content, today.year, today.month,
+            skip_day_only=skip_day_only,
         )
+        if has_day_only:
+            seen_day_only = True
         for entry in entries:
             logger.info(
                 "Found schedule: %s - %s",

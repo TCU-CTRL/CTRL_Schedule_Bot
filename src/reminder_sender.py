@@ -60,12 +60,20 @@ class ReminderSender:
         current_year = today.year
         current_month = today.month
 
+        seen_day_only = False
         for message in messages:
+            has_day_only = self._schedule_parser.has_day_only_entries(
+                message.content,
+            )
+            skip_day_only = has_day_only and seen_day_only
             entries = self._schedule_parser.parse_message(
                 message.content,
                 current_year,
                 current_month,
+                skip_day_only=skip_day_only,
             )
+            if has_day_only:
+                seen_day_only = True
 
             for entry in entries:
                 if entry.activity_date == target_date:

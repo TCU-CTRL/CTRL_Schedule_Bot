@@ -76,11 +76,19 @@ class ScheduleParser:
             original_text=message_content.strip(),
         )
 
+    def has_day_only_entries(self, message_content: str) -> bool:
+        """Check if a message contains day-only (・DD日) entries."""
+        for line in message_content.split("\n"):
+            if BULLET_DAY_PATTERN.match(line.strip()):
+                return True
+        return False
+
     def parse_message(
         self,
         message_content: str,
         reference_year: int,
         current_month: int,
+        skip_day_only: bool = False,
     ) -> list[ScheduleEntry]:
         """
         Parse a full message and return all schedule entries.
@@ -114,7 +122,10 @@ class ScheduleParser:
                 i += 1
                 continue
 
-            # Try ・DD日 bullet format
+            # Try ・DD日 bullet format (skip if requested)
+            if skip_day_only:
+                i += 1
+                continue
             bullet_match = BULLET_DAY_PATTERN.match(line)
             if bullet_match:
                 day = int(bullet_match.group(1))

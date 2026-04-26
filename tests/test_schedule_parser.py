@@ -214,3 +214,18 @@ class TestParseMessage:
 
         assert len(results) == 1
         assert results[0].activity_date == date(2026, 5, 15)
+
+    def test_skip_day_only(self) -> None:
+        """Skip day-only entries when skip_day_only=True."""
+        message = "・15日\n活動紹介\n5/20 講習会"
+        results = self.parser.parse_message(message, 2026, 5, skip_day_only=True)
+
+        assert len(results) == 1
+        assert results[0].activity_date == date(2026, 5, 20)
+        assert results[0].description == "講習会"
+
+    def test_has_day_only_entries(self) -> None:
+        """Detect day-only entries in message."""
+        assert self.parser.has_day_only_entries("・15日\n活動紹介") is True
+        assert self.parser.has_day_only_entries("5/15 活動紹介") is False
+        assert self.parser.has_day_only_entries("5月15日：活動紹介") is False
